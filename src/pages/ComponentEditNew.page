@@ -1,0 +1,71 @@
+<apex:page showHeader="true" sidebar="true" standardController="Component__c" extensions="ComponentEditNewCon" docType="html-5.0">
+	 <!-- BEGIN Custom Stylesheets-->
+    <link rel="stylesheet" media="screen" href="{!URLFOR($Resource.bsvisualforce,'admin.min.css')}"/>
+    <link rel="stylesheet" media="screen" href="{!URLFOR($Resource.bsvisualforce,'app.css')}"/>
+    <link rel="stylesheet" media="screen" href="{!URLFOR($Resource.bsvisualforce,'custom.css')}"/>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css"/>
+
+    <script src="//code.jquery.com/jquery-2.1.4.min.js" type="text/javascript"></script>
+	<script src="//code.jquery.com/ui/1.11.4/jquery-ui.js" type="text/javascript"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+	
+	<div id="opfocus">
+		<apex:form id="theform" styleClass="form-horizontal">
+
+			<apex:pageBlock id="theBlock">
+				<apex:pageBlockSection columns="1">
+					<apex:pageBlockSectionItem>
+						<apex:selectList value="{!selComponent}" size="1" multiselect="false" styleClass="form-control">
+							<apex:selectOptions value="{!availablecomponents}"/>
+							<apex:actionSupport event="onchange" action="{!onComponentChange}" reRender="theBlock"/>
+						</apex:selectList>
+					</apex:pageBlockSectionItem>
+					<apex:pageBlockSectionItem>
+						<apex:outputPanel styleClass="form-group">
+					        <label class="col-xs-3 control-label">Order</label>
+					        <div class="col-xs-5">
+					            <apex:inputField value="{!component.Order__c}" styleClass="form-control input-sm"/>
+					        </div>
+					    </apex:outputPanel>
+					</apex:pageBlockSectionItem>
+				</apex:pageBlockSection>
+				<h2 class="h2 text-center"> Component Attributes </h2>
+				<hr/>
+				<apex:outputPanel id="attrPanel">
+					<div class="row">
+						<div id="attrdiv" class="form-horizontal">
+						    <apex:repeat value="{!configs}" var="c">
+						    <div class="form-group">
+						        <label class="col-xs-3 control-label">{!c.cco.Label}</label>
+						        <div class="col-xs-5">
+						            <apex:selectList value="{!c.pea.Value__c}"
+							            rendered="{!c.isPicklist}"
+							            styleClass="form-control input-sm"
+							            size="1"
+							            multiselect="false">
+							            <apex:selectOptions value="{!c.cco.options}"/>
+						          	</apex:selectList>
+						          	<apex:inputText html-type="number"
+							            rendered="{!IF(c.isNumber && NOT(c.isPicklist),true,false)}"
+							            value="{!c.pea.Value__c}"
+							            html-placeholder="{!c.cco.Name}"
+							            styleClass="form-control input-sm"/>
+						            <apex:inputText value="{!c.pea.Value__c}"
+							            rendered="{!IF(NOT(c.isNumber) && NOT(c.isPicklist),true,false)}"
+							            styleClass="form-control input-sm"/>
+						        </div>
+						    </div>
+						    </apex:repeat>
+						</div>    
+					</div>
+				</apex:outputPanel>
+
+				<apex:pageBlockButtons location="bottom">
+					<apex:commandButton value="Save" action="{!saveRecords}" styleClass="btn btn-primary"/> &nbsp;
+					<apex:commandButton value="Cancel" action="{!cancel}" styleClass="btn btn-danger"/>
+				</apex:pageBlockButtons>	
+			</apex:pageBlock>
+		</apex:form>
+	</div>
+	
+</apex:page>

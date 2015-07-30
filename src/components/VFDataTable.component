@@ -1,0 +1,269 @@
+<apex:component controller="DatatableCon"
+    selfClosing="true"
+    access="global"
+    allowDml="true">
+
+  <apex:attribute name="sobjectName"
+      type="String"
+      required="true"
+      access="global"
+      assignTo="{!config.sobjectName}"
+      default="Account"
+      description="Object Name"/>
+
+    <apex:attribute name="fieldSetName"
+      type="String"
+      required="false"
+      access="global"
+      assignTo="{!config.fieldSetName}"
+      description="** Optional / Required ** The name of the fieldset for column display. Name field is displayed by default"/>
+
+    <apex:attribute name="fieldCsv"
+      type="String"
+      required="false"
+      access="global"
+      assignTo="{!config.fieldCsv}"
+      description="Fields on Table"/>
+
+    <apex:attribute name="searchable"
+      type="boolean"
+      required="false"
+      default="true"
+      access="global"
+      assignTo="{!config.searchable}"
+      description="Is Searchable"/>
+
+    <apex:attribute name="sortable"
+      type="boolean"
+      required="false"
+      default="true"
+      access="global"
+      assignTo="{!config.sortable}"
+      description="** Optional ** if the table is sortable"/>
+
+    <apex:attribute name="tableHeading"
+      type="String"
+      required="false"
+      access="global"
+      assignTo="{!config.tableHeading}"
+      description="** Optional ** The Table heading to be displayed"/>
+
+    <apex:attribute name="defaultSortOrder"
+      type="String"
+      required="false"
+      default="ASC"
+      access="global"
+      assignTo="{!config.defaultSortOrder}"
+      description="** Optional ** the default sort order"/>
+
+     <apex:attribute name="defaultPageSize"
+      type="Integer"
+      required="false"
+      default="10"
+      access="global"
+      assignTo="{!config.defaultPageSize}"
+      description="** Optional ** The page size of a table"/>
+
+     <apex:attribute name="styleClass"
+      type="String"
+      required="false"
+      access="global"
+      assignTo="{!config.styleClass}"
+      description="Custom Style Class"/>
+
+     <apex:attribute name="tableStyleClass"
+      type="String"
+      required="false"
+      access="global"
+      description="Custom Style Class"/>
+
+    <apex:attribute name="defaultSortColumns"
+      type="String"
+      required="false"
+      default="Name"
+      assignTo="{!config.defaultSortColumns}"
+      description="** Optional ** CSV String of default Sort columns"/>
+
+    <apex:attribute name="editable"
+      type="Boolean"
+      required="false"
+      default="false"
+      assignTo="{!config.editable}"
+      description="** Optional ** If the Table is editable"/>  
+
+    <apex:attribute name="panelStyle"
+      type="String"
+      required="false"
+      access="public"
+      default="default"
+      description="Valid styles include default, primary, warning, info, success, inverse and danger."/>
+
+    <style type="text/css">
+      .dataTables_length, .dataTables_filter, .dataTables_info, .dataTables_paginate.paging_bootstrap {
+        padding: 10px!important;
+      }
+    </style>
+
+    <link rel="stylesheet" href="//cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.css"/>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css"/>
+
+    <!-- Optional theme -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css"/>
+    
+        <script src="//code.jquery.com/jquery-latest.js"></script>
+    
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+
+    <script type="text/javascript" charset="utf8" src="//cdn.datatables.net/1.10.5/js/jquery.dataTables.js"></script>
+    <script src="//cdn.datatables.net/plug-ins/f2c75b7247b/integration/bootstrap/3/dataTables.bootstrap.js"></script>
+
+    <div class="panel panel-{!panelStyle} {!styleClass}">
+      <div class="panel-heading">
+        <span class="panel-title">{!config.tableHeading}</span>
+      </div>
+      <table cellpadding="0" cellspacing="0" border="0" class="table table-bordered table-hover {!tableStyleClass}" id="dtTable{!componentId}">
+        <thead>
+          <apex:repeat value="{!fields}" var="fld">
+            <th>{!fieldLabelMap[fld]}</th>
+          </apex:repeat>
+        </thead>
+        <tbody> <!-- @remoteAction data --> </tbody>
+      </table>
+    </div>
+
+    <script type="text/javascript">
+
+    // JS Variables
+      var fields{!componentId}        = [];
+      var configs{!componentId}       = $.parseJSON('{!JSENCODE(configJson)}'); // Attributes as Configurations on Javascript
+      var fieldTypeMap{!componentId}  = $.parseJSON('{!JSENCODE(fieldTypeMapJSON)}'); // Get the field type map so that we can check the date / datetime types to show properly
+      var sortColIdx{!componentId}    = 0;
+      var columns{!componentId}     = [];
+
+   //**
+
+   //** Utility functions specific for the component.
+
+      if (configs{!componentId}.fieldSetName != null && configs{!componentId}.fieldSetName != '') {
+           // Build the array based on the FieldSet.
+           <apex:repeat value="{!$ObjectType[sobjectName].FieldSets[fieldSetName]}" var="fld">
+              fields{!componentId}.push('{!fld}');
+           </apex:repeat>
+
+      } else {
+          //Build the array based on the CSV Fields Used.
+           fields{!componentId} = configs{!componentId}.fieldCsv.split(',');
+           for (var i=0;i<fields{!componentId}.length;i++) {
+              fields{!componentId}[i] = fields{!componentId}[i].trim();
+           }
+      }
+
+      for (var i = 0; i < fields{!componentId}.length; i++) {
+        columns{!componentId}.push({'data': fields{!componentId}[i]});
+      }
+
+      // Set the Sort Order for Defaults.
+      if (configs{!componentId}.defaultSortOrder == 'ASC' || configs{!componentId}.defaultSortOrder == 'asc') {
+          configs{!componentId}.defaultSortOrder = 'asc';
+      }
+      else if (configs{!componentId}.defaultSortOrder == 'DSC' || configs{!componentId}.defaultSortOrder == 'dsc' || configs{!componentId}.defaultSortOrder == 'DESC' || configs{!componentId}.defaultSortOrder == 'desc') {
+          configs{!componentId}.defaultSortOrder = 'desc';
+      }
+      else {
+        configs{!componentId}.defaultSortOrder = 'asc';
+      }
+
+      if (configs{!componentId}.defaultSortColumns == undefined || configs{!componentId}.defaultSortColumns == null || configs{!componentId}.defaultSortColumns == '') {
+          sortColIdx = 0;
+      }
+      else {
+          for (var i = 0; i < fields{!componentId}.length; i++) {
+            if(configs{!componentId}.defaultSortColumns == fields{!componentId}[i]){
+              sortColIdx{!componentId} = i;
+              break;
+            }
+          }
+      }
+
+      //* Paint the Datatable from the ServerSide Data.
+
+      $(function() {
+
+        $('#dtTable{!componentId}').DataTable().destroy();
+
+        $('#dtTable{!componentId}').DataTable({
+          columns   : columns{!componentId},
+          processing : true,
+          serverSide : true,
+          searching     : configs{!componentId}.searchable,
+          ordering       : configs{!componentId}.sortable,
+          order   : [[sortColIdx{!componentId},configs{!componentId}.defaultSortOrder]],
+          pageLength : configs{!componentId}.defaultPageSize,
+          lengthMenu    : [configs{!componentId}.defaultPageSize,10,25,50],
+          ajax: function(data, callback, settings) {
+
+            var settingObj = {};
+            settingObj.iDisplayStart = settings._iDisplayStart;
+            settingObj.iDisplayLength = settings._iDisplayLength;
+
+            var cols = new Array();
+            var sortCols = new Array();
+            var sortDirections = new Array();
+
+            $.each(settings.aoColumns,function(idx){
+              cols.push(settings.aoColumns[idx].mData);
+            });
+
+            $.each(settings.aaSorting,function(idx){
+              sortCols.push(settings.aaSorting[idx][0]);
+              sortDirections.push(settings.aaSorting[idx][1]);
+            });
+
+            settingObj.columns = cols;
+            settingObj.searchString = data.search.value;
+            settingObj.sortColumns = sortCols;
+            settingObj.sortDirections = sortDirections;
+
+
+            // Call the @RemoteAction JavaScript function
+            Visualforce.remoting.Manager.invokeAction(
+            '{!$RemoteAction.DatatableCon.invokeSearch}',
+            settingObj, configs{!componentId}.sobjectName, function(result, event) {
+                if (event.status) {
+                    for (var i = 0; i < result.data.length; i++) {
+                        var r = result.data[i];
+                        for (var j = 0; j < fields{!componentId}.length; j++) {
+                            var field = fields{!componentId}[j];
+
+                            if (r[field] == undefined) {
+                                // DataTables pops a dialog for undefined values
+                                r[field] = null;
+                            } else if (fieldTypeMap{!componentId}[field] == "DATETIME" || fieldTypeMap{!componentId}[field] == "DATE") {
+                                // Dates transmitted as longs
+                                var d = new Date(r[field]);
+                                r[field] = ''
+                                        + (d.getMonth() + 1)
+                                        + '/'
+                                        + d.getDate()
+                                        + '/'
+                                        + d.getFullYear()
+                                        ;
+                            }
+                        }
+                    }
+                    // Call back into the DataTable function
+                    callback(result);
+                } else {
+                    msgError(event.message);
+                }
+              }, {escape:true});
+            }
+        }); // load Datatable into a var.
+
+      });
+
+    </script>
+
+</apex:component>

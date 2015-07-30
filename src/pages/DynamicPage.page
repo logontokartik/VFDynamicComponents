@@ -1,0 +1,7 @@
+<apex:page showHeader="true" sidebar="false" controller="DynamicPageCon" docType="html-5.0">	
+	<apex:form >
+	<apex:outputPanel rendered="{!NOT(ISNULL(components))}">
+		<apex:dynamicComponent componentValue="{!components}"/>
+	</apex:outputPanel>
+	</apex:form>
+</apex:page>

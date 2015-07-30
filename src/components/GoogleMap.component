@@ -1,0 +1,100 @@
+<apex:component access="global">
+    <apex:attribute name="address"
+      type="String"
+      required="true"
+      access="global"
+      default="1 Market St #300, San Francisco, CA 94105"
+      description="Please enter the Address field "/>
+    <apex:attribute name="info"
+      type="String"
+      access="global"
+      default="Salesforce.com"
+      description="Please enter the information about the address"/>
+    <apex:attribute name="title"
+      type="String"
+      access="global"
+      default="Salesforce.com"
+      description="Please enter the title for the address"/>
+
+    <script type="text/javascript" src="//maps.google.com/maps/api/js?sensor=false"></script>
+   	<script src="//code.jquery.com/jquery-latest.js"></script>
+    <script type="text/javascript"> 
+
+      $jmap = $.noConflict();
+      
+	     $jmap(document).ready(function() {
+
+          var myOptions = {
+            zoom: 15,
+            mapTypeId: google.maps.MapTypeId.ROADMAP,
+            mapTypeControl: false
+          }
+
+  		    var map;
+          var marker;
+          var geocoder = new google.maps.Geocoder();
+          var address = "{!address}";
+
+          var infowindow = new google.maps.InfoWindow({
+            content: "<b>{!info}</b><br>{!address}"
+          });
+
+          geocoder.geocode( { address: address}, function(results, status) {
+            if (status == google.maps.GeocoderStatus.OK && results.length) {
+              if (status != google.maps.GeocoderStatus.ZERO_RESULTS) {
+        
+                //create map
+                map = new google.maps.Map(document.getElementById("map"), myOptions);
+        
+                //center map
+                map.setCenter(results[0].geometry.location);
+        
+                //create marker
+                marker = new google.maps.Marker({
+                    position: results[0].geometry.location,
+                    map: map,
+                    title: "{!title}"
+                });
+        
+                //add listeners
+                google.maps.event.addListener(marker, 'click', function() {
+                  infowindow.open(map,marker);
+                });
+                google.maps.event.addListener(infowindow, 'closeclick', function() {
+                  map.setCenter(marker.getPosition()); 
+                });
+        
+              }
+
+            } else {
+              $jmap('#map').css({'height' : '15px'});
+              $jmap('#map').html("Oops! {!title}'s billing address could not be found, please make sure the address is correct.");
+              resizeIframe();
+            }
+          });
+
+          function resizeIframe() {
+            var me = window.name;
+            if (me) {
+              var iframes = parent.document.getElementsByName(me);
+              if (iframes && iframes.length == 1) {
+                height = document.body.offsetHeight;
+                iframes[0].style.height = height + "px";
+              }
+            }
+          }
+
+		});
+</script>
+
+<style>
+#map {
+  font-family: Arial;
+  font-size:12px;
+  line-height:normal !important;
+  height:250px;
+  background:transparent;
+}
+</style>
+<div id="map"></div> 
+</apex:component>

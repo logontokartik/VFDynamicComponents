@@ -1,0 +1,353 @@
+<!---
+Credits go to Karanraj for originally building this single page app..
+-->
+
+<apex:page showHeader="false" standardStylesheets="false">
+
+<!-- Boostrap and jQuery file -->
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" />
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap-theme.min.css" />
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/3.0.3/handlebars.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.8.2/underscore-min.js"></script>
+
+<style>
+  body { padding-top: 70px; }
+
+      .info-card {
+        width: 100%;
+        border: 1px solid rgb(215, 215, 215);
+        position: relative;
+        font-family: 'Lato', sans-serif;
+        margin-bottom: 20px;
+        overflow: hidden;
+        background-color: #ae7d44;
+        border-color:#ae7d44;
+      }
+      .info-card-alternate {
+        background-color: #ae7d44;
+        border-color:#ae7d44;
+      }
+      .info-card > img {
+        width: 100px;
+        margin-bottom: 60px;
+      }
+      .info-card .info-card-details,
+      .info-card .info-card-details .info-card-header  {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        bottom: -100%;
+        left: 0;
+        padding: 0 15px;
+        background: #fff;
+        text-align: center;
+        color: #041425;
+
+      }
+      .info-card .info-card-details::-webkit-scrollbar {
+        width: 8px;
+      }
+      .info-card .info-card-details::-webkit-scrollbar-button {
+        width: 8px;
+        height: 0px;
+      }
+      .info-card .info-card-details::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .info-card .info-card-details::-webkit-scrollbar-thumb {
+        background: rgb(160, 160, 160);
+      }
+      .info-card .info-card-details::-webkit-scrollbar-thumb:hover {
+        background: rgb(130, 130, 130);
+      }
+
+      .info-card .info-card-details .info-card-header {
+        height: auto;
+        bottom: 100%;
+        padding: 10px 5px;
+      }
+      .info-card:hover .info-card-details {
+        bottom: 0px;
+        overflow: auto;
+        padding-bottom: 25px;
+      }
+      .info-card:hover .info-card-details .info-card-header {
+        position: relative;
+        bottom: 0px;
+        padding-top: 45px;
+        padding-bottom: 25px;
+      }
+      .info-card .info-card-details .info-card-header h1,
+      .info-card .info-card-details .info-card-header h3 {
+        color: rgb(62, 62, 62);
+        font-size: 22px;
+        font-weight: 900;
+        text-transform: uppercase;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .info-card .info-card-details .info-card-header h3 {
+        color: rgb(142, 182, 52);
+        font-size: 15px;
+        font-weight: 400;
+        margin-top: 5px;
+      }
+      .info-card .info-card-details .info-card-detail .social {
+        list-style: none;
+        padding: 0px;
+        margin-top: 25px;
+        text-align: center;
+      }
+      .info-card .info-card-details .info-card-detail .social a {
+        position: relative;
+        display: inline-block;
+        min-width: 40px;
+        padding: 10px 0px;
+        margin: 0px 5px;
+        overflow: hidden;
+        text-align: center;
+        border-radius: 40px;
+      }
+      .animate {
+        -webkit-transition: all 0.3s ease-in-out;
+        -moz-transition: all 0.3s ease-in-out;
+        -o-transition: all 0.3s ease-in-out;
+        -ms-transition: all 0.3s ease-in-out;
+        transition: all 0.3s ease-in-out;
+      }
+</style>
+
+<script  type="text/javascript">
+  
+  $(document).ready(function() {
+    
+    fetchContact();
+    //search button click
+    $('#searchCon').click(function(){   
+      $('#thumRow').empty();
+      fetchContact();
+    });
+    
+    //Save button click       
+    $('#saveContact').click(function(){ 
+      Createcontact();
+    });
+    
+    //Delete button click    
+    $('#delete').click(function(){ 
+      var delCon = new SObjectModel.cont({
+                    Id : $('#inputId').val()
+                    });
+      $('.bs-example-modal-sm').modal('hide');     
+      delCon.del(updateCallback);
+    });
+    
+    //New Contact button click    
+    $('#new').click(function(){ 
+      clearfieldValues();
+    });
+        
+  }); 
+  
+  //Function to clear filed values in the form      
+  function clearfieldValues(){
+    $('#inputFirstName').val(''); 
+    $('#inputLastName').val(''); 
+    $('#inputTitle').val('');    
+    $('#inputPhone').val('');
+    $('#inputEmail').val('');
+    $('#inputId').val('');        
+  }
+  
+  //Function to Create/Update contact       
+  function Createcontact(){
+    var updateCon = new SObjectModel.cont({
+        FirstName : $('#inputFirstName').val(),
+        LastName : $('#inputLastName').val(),
+        Title : $('#inputTitle').val(),
+        Phone : $('#inputPhone').val(),
+        Email : $('#inputEmail').val()
+    });
+    var cId = $('#inputId').val();
+    //If cId is null then Create new Contact
+    if(!cId){
+      updateCon.create(updateCallback);
+    }else{
+    //Id cId has value then update the Contact record
+      updateCon .set('Id',cId);
+      updateCon.update(updateCallback);
+    }
+  }    
+      
+  // Callback to handle DML Remote Objects calls
+  function updateCallback(err, ids){
+    if (err) { 
+        alert(err); 
+    } else {
+       $('#thumRow').empty();
+       fetchContact();
+       $('#myModal').modal('hide')
+    }
+  }
+  
+  //Function to fetch contact      
+  function fetchContact(){
+    var wh = new SObjectModel.cont();
+    wh.retrieve({
+      where:{
+        Name: { like:$('#search').val()+'%'}
+      },
+      limit: 100
+      },function(err, records){
+        if(err) alert(err.message);
+        else {
+          
+          contactsTemplate = Handlebars.compile($("#contact_template").html());  
+          
+          var contacts = new Array();
+          records.forEach(function(record) {
+            var contact = new Object();
+            contact.Name = record.get("Name");
+            contact.Title = record.get("Title");
+            contact.Phone = record.get("Phone");
+            contact.Email = record.get("Email");
+            if (record.get('Image_URL__c') != null)
+              contact.imageURL = record.get("Image_URL__c");
+            else    
+            contact.imageURL = 'https://cdn2.iconfinder.com/data/icons/website-icons/512/User_Avatar-128.png';
+            contacts.push(contact);
+          });
+          var record_data  = {"contacts":contacts};  
+          console.log(record_data);
+          var result_html  = contactsTemplate(record_data);
+          $('#thumRow').html(result_html);  
+        }
+      });      
+}       
+</script>
+
+<script id="contact_template" type="text/x-handlers-template">
+      <div class="row">
+          {{#each contacts}}
+          <div class="col-md-3">
+                  <div class="info-card">
+                      <img style="width: 100%" src="{{imageURL}}"/>
+                      <div class="info-card-details animate">
+                          <div class="info-card-header">
+                            <h1> {{Name}} </h1>
+                            <h3> {{Title}}, {{Phone}} </h3>
+                          </div>
+                          <div class="info-card-detail">
+                            <!-- Description -->
+                            <p>
+                              {{Email}}<br/>
+
+                            </p>
+                            <p><br/>
+                            <button type="button" class="btn btn-primary" data-toggle="modal" data-target="#myModal" id="edit">Edit</button>    
+                            <button type="button" class="btn btn-danger" data-toggle="modal" data-target=".bs-example-modal-sm">Delete</button>
+                            </p>
+                          </div>
+                      </div>
+                    </div>
+                </div>
+                {{/each}}
+        </div>
+    </script> 
+
+<!-- Visualforce Remote object coponent -->
+<apex:remoteObjects >
+<apex:remoteObjectModel name="Contact" jsShorthand="cont" fields="Name,Id,FirstName,LastName,Phone,Email,Title,AccountId,Image_URL__c">
+</apex:remoteObjectModel>
+</apex:remoteObjects>   
+
+<!-- Static Nav bar at the top of the page -->
+<nav class="navbar navbar-default navbar-fixed-top" role="navigation" >
+<a class="navbar-brand" href="#" data-toggle="modal" data-target="#myModal">Contacts</a>
+<button type="button" class="btn btn-success navbar-btn" data-toggle="modal" data-target="#myModal" id="new">New Contact</button>
+
+<form class="navbar-form navbar-right" role="search">
+  <div class="form-group">
+    <input type="text" class="form-control" placeholder="Search" id="search" />
+  </div>
+  <button type="button" class="btn btn-default" id="searchCon">Search</button>
+</form>
+</nav>
+
+<!-- Div tag to display the Contact records -->
+<div class="container">
+  <div class="row" id="thumRow" >
+
+  </div>
+</div>
+
+<!-- Pop-up window will display when we click Edit/New Contact button -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel">Create Contact</h4>
+      </div>
+      <div class="modal-body">
+        <form class="form-horizontal">
+          <div class="form-group">
+            <label for="inputFirstName" class="control-label col-xs-2">FirstName</label>
+            <div class="col-xs-10">
+              <input type="text" class="form-control" id="inputFirstName"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="inputLastName" class="control-label col-xs-2">LastName</label>
+            <div class="col-xs-10">
+              <input type="text" class="form-control" id="inputLastName"/>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="inputTitle" class="control-label col-xs-2">Title</label>
+              <div class="col-xs-10">
+                <input type="text" class="form-control" id="inputTitle"/>
+              </div>
+          </div>
+          <div class="form-group">
+            <label for="inputEmail" class="control-label col-xs-2">Email</label>
+              <div class="col-xs-10">
+                <input type="Email" class="form-control" id="inputEmail"/>
+              </div>
+          </div>
+          <div class="form-group">
+            <label for="inputPhone" class="control-label col-xs-2">Phone</label>
+            <div class="col-xs-10">
+              <input type="tel" class="form-control" id="inputPhone" />
+            </div>
+          </div>
+          <input type="hidden" class="form-control" id="inputId" />
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" id="saveContact">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pop-up window to confirm the delete operation -->
+<div class="modal fade bs-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-sm">
+    <div class="modal-content">
+    <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="myModalLabel">Delete Contact?</h4>
+      </div>
+     <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-danger" id="delete">Delete</button>
+    </div>
+    </div>
+  </div>
+</div>
+
+</apex:page>

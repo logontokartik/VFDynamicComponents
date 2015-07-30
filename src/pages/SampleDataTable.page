@@ -1,0 +1,8 @@
+<apex:page docType="html-5.0" sidebar="false">
+    <c:VFDataTable sobjectName="Account"
+                   fieldCsv="Name,AccountSource,Industry,BillingStreet,BillingCity,BillingState,BillingCountry"
+                   searchable="true"
+                   sortable="true"
+                   defaultPageSize="5"
+                   defaultSortColumns="BillingCity" />
+</apex:page>
