@@ -9,7 +9,6 @@ public with sharing class ComponentEditNewCon {
     public Boolean hasError                         {get;set;}
 
 	public Component__c component  					{get;set;}
-	public ComponentRegistration__c componentClass;
 	
 	private List<Component__c> components;
 	private ComponentSettings compSettings;

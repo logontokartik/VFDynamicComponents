@@ -21,6 +21,10 @@
 		<name>CustomObject</name>
 	</types>
 	<types>
+		<members>Contact.Image_URL__c</members>
+		<name>CustomField</name>
+	</types>
+	<types>
 		<members>*</members>
 		<name>StaticResource</name>
 	</types>
